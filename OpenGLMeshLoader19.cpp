@@ -8,6 +8,7 @@ using namespace std;
 
 int WIDTH = 1280;
 int HEIGHT = 720;
+void handleCollision();
 
 GLuint tex;
 char title[] = "Run Forest Run";
@@ -144,13 +145,22 @@ float bush2x = -40.0;
 float tree1x = -20.0;
 float tree2x = -60.0;
 float bridgex = -80.0;
+float bush3x = -80.0;
+float tree3x = -100.0;
+float bush4x = -120.0;
+float tree4x = -140.0;
+float bush5x = -150.0;
 float playery = 0;
+float redpowerupx = -70.0;
+float orangepowerupx = -50.0;
 bool jump = false;
 int jumpTimer = 0;
 int score = 0;
-int LevelTimer = 175;
-bool Level2 = false;
-
+int LevelTimer = 178;
+int lives = 5;
+bool Level2 = true;
+bool firstview = false;
+bool gameOver = false;
 //=======================================================================
 // Lighting Configuration Function
 //=======================================================================
@@ -264,7 +274,7 @@ void print1(float x, float y, char* string)
 void Timer(int value)
 {
 	LevelTimer--;
-	if (jump) {
+	if (jump && !firstview) {
 		jumpTimer++;
 		if (jumpTimer == 6) {
 			playery = 0;
@@ -272,14 +282,47 @@ void Timer(int value)
 			jumpTimer = 0;
 		}
 	}
+	if (jump && firstview) {
+		jumpTimer++;
+		camera.eye.x = 18.0442;
+		camera.eye.y = 5.55441;
+		camera.eye.z = 0;
+		camera.center.x = 17.1286;
+		camera.center.y = 5.15244;
+		camera.center.z = 0;
+		camera.up.x = -0.401961;
+		camera.up.y = 0.915657;
+		camera.up.z = 0;
+		if (jumpTimer == 6) {
+			playery = 0;
+			jump = false;
+			jumpTimer = 0;
+			camera.eye.x = 18.8482;
+			camera.eye.y = 3.72311;
+			camera.eye.z = 0;
+			camera.center.x = 17.9325;
+			camera.center.y = 3.32113;
+			camera.center.z = 0;
+			camera.up.x = -0.401981;
+			camera.up.y = 0.915648;
+			camera.up.z = 0;
+		}
+	}
 	if (LevelTimer == 0) {
-		LevelTimer = 175;
+		LevelTimer = 178;
 		Level2 = !Level2;
 		bush1x = 0.0;
 		bush2x = -40.0;
 		tree1x = -20.0;
 		tree2x = -60.0;
 		bridgex = -80.0;
+		orangepowerupx = -50.0;
+		redpowerupx = -70.0;
+		bush3x = -80.0;
+		tree3x = -100.0;
+		bush4x = -120.0;
+		tree4x = -140.0;
+		bush5x = -150.0;
 	}
 	score += 5;
 	bush1x += 1.0;
@@ -287,10 +330,18 @@ void Timer(int value)
 	tree1x += 1.0;
 	tree2x += 1.0;
 	bridgex += 1.0;
-	glutPostRedisplay();
+	bush3x += 1.0;
+	tree3x += 1.0;
+	bush4x += 1.0;
+	tree4x += 1.0;
+	bush5x += 1.0;
+	redpowerupx += 1.0;
+	orangepowerupx += 1.0;
+	handleCollision();
+	if(!gameOver)
+		glutPostRedisplay();
 	if (Level2)
 		glutTimerFunc(100, Timer, 0);
-	
 	else
 		glutTimerFunc(200, Timer, 0);
 }
@@ -344,25 +395,16 @@ void RenderBridge(float pos) {
 }
 
 void RenderLogs(float pos) {
-	glDisable(GL_LIGHTING);	// Disable lighting 
-
-	
 	glPushMatrix();
 	glTranslatef(pos, 0, 0);
-	//glScalef(0.25, 0.15, 0.25);
 	glScalef(0.5, 0.5, 0.5);
 	model_logs.Draw();
 	glPopMatrix();
-	glEnable(GL_LIGHTING);	// Enable lighting again for other entites coming throung the pipeline.
-
-	
-
 }
 
 void RenderBush(float pos) {
 	glPushMatrix();
-	glTranslatef(pos,0,0);
-	//glScalef(0.05, 0.15, 0.25);
+	glTranslatef(pos, 0, 0);
 	glScalef(0.5, 1, 0.8);
 	model_bush.Draw();
 	glPopMatrix();
@@ -387,12 +429,29 @@ void RenderPlayer() {
 
 void RenderCar(float pos) {
 	glPushMatrix();
-	glTranslatef(pos, 0.8, 7);
+	glTranslatef(pos, 0.75, 7);
 	glScalef(0.3, 0.3, 0.3);
 	glRotatef(8, 1, 0, 0);
 	model_car.Draw();
 	glPopMatrix();
 }
+
+void RenderRedPowerUp(float pos) {
+	glPushMatrix();
+	glTranslatef(pos, 5, 0);
+	glScalef(0.15, 0.175, 0.15);
+	model_redpowerup.Draw();
+	glPopMatrix();
+}
+
+void RenderOrangePowerUp(float pos) {
+	glPushMatrix();
+	glTranslatef(pos, 5, 0);
+	glScalef(0.15, 0.175, 0.15);
+	model_orangepowerup.Draw();
+	glPopMatrix();
+}
+
 //=======================================================================
 // Display Function
 //=======================================================================
@@ -410,7 +469,7 @@ void myDisplay(void)
 		// Draw Ground
 		RenderGround(1);
 		//model_powerup.Draw();
-		
+
 		RenderPlayer();
 
 		RenderBridge(bridgex);
@@ -419,16 +478,12 @@ void myDisplay(void)
 		RenderBush(bush2x);
 		RenderLogs(tree1x);
 		RenderLogs(tree2x);
-		//RenderBush(bush1x - 80);
-		RenderBush(bush2x - 80);
-		RenderLogs(tree1x - 80);
-		RenderLogs(tree2x - 80);
+		RenderBush(bush4x);
+		RenderLogs(tree3x);
+		RenderLogs(tree4x);
 
-		glPushMatrix();
-		glTranslatef(0, 5, 0);
-		glScalef(0.15, 0.175, 0.15);
-		model_redpowerup.Draw();
-		glPopMatrix();
+
+		RenderOrangePowerUp(orangepowerupx);
 
 
 		//sky box
@@ -450,8 +505,20 @@ void myDisplay(void)
 		glColor3d(0, 1, 0);
 		char* sc[20];
 		sprintf((char*)sc, "Score: %d", score);
-		print1(-3, 8, (char*)sc);
+		print1(-3, 12, (char*)sc);
 
+		glColor3d(0, 1, 0);
+		char* sc2[20];
+		sprintf((char*)sc2, "Lives: %d", lives);
+		print1(-3, 10, (char*)sc2);
+
+		if (lives == 0) {
+			glColor3d(0, 1, 0);
+			char* sc3[20];
+			sprintf((char*)sc3, "Game Over!");
+			print1(0, 14, (char*)sc3);
+			gameOver = true;
+		}
 
 		glutSwapBuffers();
 	}
@@ -469,12 +536,13 @@ void myDisplay(void)
 		RenderCar(tree1x);
 		RenderStones(bush2x);
 		RenderCar(tree2x);
-		RenderStones(bush1x -80);
-		RenderCar(tree1x-80);
-		RenderStones(bush2x-80);
-		RenderCar(tree2x-80);
-
-
+		RenderStones(bush3x);
+		RenderCar(tree3x);
+		RenderStones(bush4x);
+		RenderCar(tree4x);
+		RenderStones(bush5x);
+		RenderRedPowerUp(redpowerupx);
+		
 		//sky box
 		glPushMatrix();
 
@@ -494,8 +562,20 @@ void myDisplay(void)
 		glColor3d(0, 1, 0);
 		char* sc[20];
 		sprintf((char*)sc, "Score: %d", score);
-		print1(-3, 8, (char*)sc);
+		print1(-3, 12, (char*)sc);
 
+		glColor3d(0, 1, 0);
+		char* sc2[20];
+		sprintf((char*)sc2, "Lives: %d", lives);
+		print1(-3, 10, (char*)sc2);
+
+		if (lives == 0) {
+			glColor3d(0, 1, 0);
+			char* sc3[20];
+			sprintf((char*)sc3, "Game Over!");
+			print1(0, 14, (char*)sc3);
+			gameOver = true;
+		}
 
 		glutSwapBuffers();
 	}
@@ -509,11 +589,14 @@ void myKeyboard(unsigned char button, int x, int y)
 	float d = 1.0;
 	switch (button)
 	{
+
+
 	case ' ':
 		playery = 2.5;
 		jump = true;
 		break;
 	case '1': //1st Person View
+		firstview = true;
 		camera.eye.x = 18.8482;
 		camera.eye.y = 3.72311;
 		camera.eye.z = 0;
@@ -525,6 +608,7 @@ void myKeyboard(unsigned char button, int x, int y)
 		camera.up.z = 0;
 		break;
 	case '3': //3rd Person View
+		firstview = false;
 		camera.eye.x = 23.5;
 		camera.eye.y = 6.5;
 		camera.eye.z = 0;
@@ -655,4 +739,65 @@ void main(int argc, char** argv)
 	glShadeModel(GL_SMOOTH);
 
 	glutMainLoop();
+}
+
+void deductLives() {
+	if (lives > 0){
+		lives--; 
+		score -= 50;
+	}
+}
+
+void handleCollision() {
+	if (bush1x >= 18.5 && bush1x <= 20 && playery != 2.5) {
+		cout << "Collision";
+		deductLives();
+		bush1x += 1.5;
+	}
+	if (bush2x >= 18.5 && bush2x <= 20 && playery != 2.5) {
+		cout << "Collision";
+		deductLives();
+		bush2x += 1.5;
+	}
+	if (bush3x >= 18.5 && bush3x <= 20 && playery != 2.5 && Level2) {
+		cout << "Collision";
+		deductLives();
+		bush3x += 1.5;
+	}
+	if (bush4x >= 18.5 && bush4x <= 20 && playery != 2.5) {
+		cout << "Collision";
+		deductLives();
+		bush4x += 1.5;
+	}
+	if (bush5x >= 18.5 && bush5x <= 20 && playery != 2.5 && Level2) {
+		cout << "Collision";
+		deductLives();
+		bush5x += 1.5;
+	}
+	if (tree1x >= 18.5 && tree1x <= 20 && playery != 2.5) {
+		cout << "Collision";
+		deductLives();
+		tree1x += 1.5;
+	}
+	if (tree2x >= 18.5 && tree2x <= 20 && playery != 2.5) {
+		cout << "Collision";
+		deductLives();
+		tree2x += 1.5;
+	}
+	if (tree3x >= 18.5 && tree3x <= 20 && playery != 2.5) {
+		cout << "Collision";
+		deductLives();
+		tree3x += 1.5;
+	}
+	if (tree4x >= 18.5 && tree4x <= 20 && playery != 2.5) {
+		cout << "Collision";
+		deductLives();
+		tree4x += 1.5;
+
+	}
+	if (bridgex >= 17 && bridgex <= 21 && playery == 2.5 && !Level2) {
+		cout << "Collision";
+		deductLives();
+		bridgex += 4;
+	}
 }
