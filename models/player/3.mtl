@@ -1,0 +1,58 @@
+# 3ds Max Wavefront OBJ Exporter v0.97b - (c)2007 guruware
+# File Created: 16.10.2016 15:23:30
+
+newmtl 2___Default
+	Ns 10.0000
+	Ni 1.5000
+	d 1.0000
+	Tr 0.0000
+	Tf 1.0000 1.0000 1.0000 
+	illum 2
+	Ka 0.5882 0.5882 0.5882
+	Kd 0.5882 0.5882 0.5882
+	Ks 0.0000 0.0000 0.0000
+	Ke 0.3529 0.3529 0.3529
+	map_Ka E:\others\10 people collection\models & texture\10 people\attachment\texture\Cleaner_Boss_Body_C.bmp
+	map_Kd E:\others\10 people collection\models & texture\10 people\attachment\texture\Cleaner_Boss_Body_C.bmp
+
+newmtl 5___Default
+	Ns 10.0000
+	Ni 1.5000
+	d 1.0000
+	Tr 0.0000
+	Tf 1.0000 1.0000 1.0000 
+	illum 2
+	Ka 0.5882 0.5882 0.5882
+	Kd 0.5882 0.5882 0.5882
+	Ks 0.0000 0.0000 0.0000
+	Ke 0.1765 0.1765 0.1765
+	map_Ka E:\others\10 people collection\models & texture\10 people\attachment\texture\Cleaner_Legs_B.bmp
+	map_Kd E:\others\10 people collection\models & texture\10 people\attachment\texture\Cleaner_Legs_B.bmp
+
+newmtl 32323
+	Ns 10.0000
+	Ni 1.5000
+	d 1.0000
+	Tr 0.0000
+	Tf 1.0000 1.0000 1.0000 
+	illum 2
+	Ka 0.5882 0.5882 0.5882
+	Kd 0.5882 0.5882 0.5882
+	Ks 0.0000 0.0000 0.0000
+	Ke 0.3529 0.3529 0.3529
+	map_Ka E:\others\10 people collection\models & texture\10 people\attachment\texture\Hand_White_A.bmp
+	map_Kd E:\others\10 people collection\models & texture\10 people\attachment\texture\Hand_White_A.bmp
+
+newmtl 1___Default
+	Ns 10.0000
+	Ni 1.5000
+	d 1.0000
+	Tr 0.0000
+	Tf 1.0000 1.0000 1.0000 
+	illum 2
+	Ka 0.5882 0.5882 0.5882
+	Kd 0.5882 0.5882 0.5882
+	Ks 0.0000 0.0000 0.0000
+	Ke 0.3529 0.3529 0.3529
+	map_Ka E:\others\10 people collection\models & texture\10 people\attachment\texture\Cleaner_Face_F.bmp
+	map_Kd E:\others\10 people collection\models & texture\10 people\attachment\texture\Cleaner_Face_F.bmp
