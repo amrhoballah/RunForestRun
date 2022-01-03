@@ -153,28 +153,39 @@ float bush5x = -150.0;
 float playery = 0;
 float redpowerupx = -70.0;
 float orangepowerupx = -50.0;
+float rotateCan = 0.0;
 bool jump = false;
 int jumpTimer = 0;
 int score = 0;
 int LevelTimer = 178;
 int lives = 5;
-bool Level2 = true;
+bool Level2 = false;
 bool firstview = false;
 bool gameOver = false;
+bool tripleScore = false;
+bool lifepower = false;
+int powerupTimer = 0;
+float valueL = -5.0;
+int raye7gai = 0;
+bool addsub = false;
 //=======================================================================
 // Lighting Configuration Function
 //=======================================================================
 void InitLightSource()
 {
-	// Enable Lighting for this OpenGL Program
 	glEnable(GL_LIGHTING);
-
-	// Enable Light Source number 0
-	// OpengL has 8 light sources
 	glEnable(GL_LIGHT0);
 
+	// Define light source 0 position in World Space
+	GLfloat light_position[] = { 0.0f, 10.0f, 0.0f, 1.0f };
+	glLightfv(GL_LIGHT0, GL_POSITION, light_position);
+}
+void Level1Light() {
+	
+	glDisable(GL_LIGHT1);
+
 	// Define Light source 0 ambient light
-	GLfloat ambient[] = { 0.1f, 0.1f, 0.1, 1.0f };
+	GLfloat ambient[] = { 0.8f, 0.8f, 0.8, 1.0f };
 	glLightfv(GL_LIGHT0, GL_AMBIENT, ambient);
 
 	// Define Light source 0 diffuse light
@@ -185,9 +196,41 @@ void InitLightSource()
 	GLfloat specular[] = { 1.0f, 1.0f, 1.0f, 1.0f };
 	glLightfv(GL_LIGHT0, GL_SPECULAR, specular);
 
-	// Finally, define light source 0 position in World Space
-	GLfloat light_position[] = { 0.0f, 10.0f, 0.0f, 1.0f };
-	glLightfv(GL_LIGHT0, GL_POSITION, light_position);
+}
+
+void Level2Light() {
+	glDisable(GL_LIGHT1);
+
+	// Define Light source 0 ambient light
+	GLfloat ambient[] = { 0.1f, 0.1f, 0.1, 0.0f };
+	glLightfv(GL_LIGHT0, GL_AMBIENT, ambient);
+
+	// Define Light source 0 diffuse light
+	GLfloat diffuse[] = { 0.1f, 0.1f, 0.1f, 0.0f };
+	glLightfv(GL_LIGHT0, GL_DIFFUSE, diffuse);
+
+	// Define Light source 0 Specular light
+	GLfloat specular[] = { 0.0f, 0.0f, 0.0f, 0.0f };
+	glLightfv(GL_LIGHT0, GL_SPECULAR, specular);
+
+}
+
+void SpotLight(int pos) {
+	/* Spot light */
+	glEnable(GL_LIGHT1);
+	glPushMatrix();
+	GLfloat lightColor0[] = { 1.0f, 1.0f, 1.0f,0.0f };
+	GLfloat lightPos0[] = { 19.0f, 1.0f, pos, 1.0f };
+	glLightfv(GL_LIGHT1, GL_SPECULAR, lightColor0);
+	glLightfv(GL_LIGHT1, GL_DIFFUSE, lightColor0);
+	glLightfv(GL_LIGHT1, GL_POSITION, lightPos0);
+
+	glLightf(GL_LIGHT1, GL_SPOT_CUTOFF, 3.0);
+	GLfloat spot_direction[] = { -1.0, 0.0, 0.0 };
+	glLightfv(GL_LIGHT1, GL_SPOT_DIRECTION, spot_direction);
+	glLightf(GL_LIGHT1, GL_CONSTANT_ATTENUATION, 1.0);
+	glLightf(GL_LIGHT1, GL_SPOT_EXPONENT, 2.0);
+	glPopMatrix();
 }
 
 void setupCamera()
@@ -273,6 +316,16 @@ void print1(float x, float y, char* string)
 
 void Timer(int value)
 {
+	if (Level2) {
+		raye7gai++;
+		if (!addsub)
+			valueL += 0.5;
+		else
+			valueL -= 0.5;
+		if (raye7gai % 20 == 0)
+			addsub = !addsub;
+	}
+	rotateCan += 5.0;
 	LevelTimer--;
 	if (jump && !firstview) {
 		jumpTimer++;
@@ -309,6 +362,7 @@ void Timer(int value)
 		}
 	}
 	if (LevelTimer == 0) {
+		rotateCan = 0.0;
 		LevelTimer = 178;
 		Level2 = !Level2;
 		bush1x = 0.0;
@@ -324,7 +378,12 @@ void Timer(int value)
 		tree4x = -140.0;
 		bush5x = -150.0;
 	}
-	score += 5;
+	if (tripleScore) {
+		score += 15;
+	}
+	else {
+		score += 5;
+	}
 	bush1x += 1.0;
 	bush2x += 1.0;
 	tree1x += 1.0;
@@ -340,6 +399,18 @@ void Timer(int value)
 	handleCollision();
 	if(!gameOver)
 		glutPostRedisplay();
+
+	if (tripleScore || lifepower)
+		powerupTimer++;
+	if (!Level2 && powerupTimer == 40) {
+		powerupTimer = 0;
+		tripleScore = false;
+	}
+	else if (powerupTimer == 40) {
+		powerupTimer = 0;
+		lifepower = false;
+	}
+
 	if (Level2)
 		glutTimerFunc(100, Timer, 0);
 	else
@@ -351,11 +422,11 @@ void Timer(int value)
 //=======================================================================
 void RenderGround(int level)
 {
-	glDisable(GL_LIGHTING);	// Disable lighting 
+	glDisable(GL_LIGHTING); 
 
-	glColor3f(0.6, 0.6, 0.6);	// Dim the ground texture a bit
+	glColor3f(0.6, 0.6, 0.6);
 
-	glEnable(GL_TEXTURE_2D);	// Enable 2D texturing
+	glEnable(GL_TEXTURE_2D);
 	if (level == 1) {
 		glBindTexture(GL_TEXTURE_2D, tex_ground.texture[0]);
 	}// Bind the ground texture
@@ -365,21 +436,21 @@ void RenderGround(int level)
 
 	glPushMatrix();
 	glBegin(GL_QUADS);
-	glNormal3f(0, 1, 0);	// Set quad normal direction.
-	glTexCoord2f(0, 0);		// Set tex coordinates ( Using (0,0) -> (5,5) with texture wrapping set to GL_REPEAT to simulate the ground repeated grass texture).
-	glVertex3f(-20, 0, -10);
+	glNormal3f(0, 1, 0);	
+	glTexCoord2f(0, 0);
+	glVertex3f(-60, 0, -10);
 	glTexCoord2f(5, 0);
 	glVertex3f(20, 0, -10);
 	glTexCoord2f(5, 5);
 	glVertex3f(20, 0, 10);
 	glTexCoord2f(0, 5);
-	glVertex3f(-20, 0, 10);
+	glVertex3f(-60, 0, 10);
 	glEnd();
 	glPopMatrix();
 
-	glEnable(GL_LIGHTING);	// Enable lighting again for other entites coming throung the pipeline.
+	glEnable(GL_LIGHTING);
 
-	glColor3f(1, 1, 1);	// Set material back to white instead of grey used for the ground texture.
+	glColor3f(1, 1, 1);
 }
 
 void RenderBridge(float pos) {
@@ -436,17 +507,35 @@ void RenderCar(float pos) {
 	glPopMatrix();
 }
 
-void RenderRedPowerUp(float pos) {
+void RenderSky() {
+	glPushMatrix();
+
+	GLUquadricObj* qobj;
+	qobj = gluNewQuadric();
+	glTranslated(50, 0, 0);
+	glRotated(90, 1, 0, 1);
+	glBindTexture(GL_TEXTURE_2D, tex);
+	gluQuadricTexture(qobj, true);
+	gluQuadricNormals(qobj, GL_SMOOTH);
+	gluSphere(qobj, 100, 100, 100);
+	gluDeleteQuadric(qobj);
+
+	glPopMatrix();
+}
+
+void RenderRedPowerUp(float pos, float angle) {
 	glPushMatrix();
 	glTranslatef(pos, 5, 0);
+	glRotatef(angle, 0, 1, 0);
 	glScalef(0.15, 0.175, 0.15);
 	model_redpowerup.Draw();
 	glPopMatrix();
 }
 
-void RenderOrangePowerUp(float pos) {
+void RenderOrangePowerUp(float pos, float angle) {
 	glPushMatrix();
 	glTranslatef(pos, 5, 0);
+	glRotatef(angle, 0, 1, 0);
 	glScalef(0.15, 0.175, 0.15);
 	model_orangepowerup.Draw();
 	glPopMatrix();
@@ -458,13 +547,11 @@ void RenderOrangePowerUp(float pos) {
 void myDisplay(void)
 {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	setupCamera();
+	
 
 	if (!Level2) {
-		GLfloat lightIntensity[] = { 0.7, 0.7, 0.7, 1.0f };
-		GLfloat lightPosition[] = { 0.0f, 100.0f, 0.0f, 0.0f };
-		glLightfv(GL_LIGHT0, GL_POSITION, lightPosition);
-		glLightfv(GL_LIGHT0, GL_AMBIENT, lightIntensity);
+		Level1Light();
+		setupCamera();
 
 		// Draw Ground
 		RenderGround(1);
@@ -482,52 +569,13 @@ void myDisplay(void)
 		RenderLogs(tree3x);
 		RenderLogs(tree4x);
 
+		RenderOrangePowerUp(orangepowerupx,rotateCan);
 
-		RenderOrangePowerUp(orangepowerupx);
-
-
-		//sky box
-		glPushMatrix();
-
-		GLUquadricObj* qobj;
-		qobj = gluNewQuadric();
-		glTranslated(50, 0, 0);
-		glRotated(90, 1, 0, 1);
-		glBindTexture(GL_TEXTURE_2D, tex);
-		gluQuadricTexture(qobj, true);
-		gluQuadricNormals(qobj, GL_SMOOTH);
-		gluSphere(qobj, 100, 100, 100);
-		gluDeleteQuadric(qobj);
-
-
-		glPopMatrix();
-
-		glColor3d(0, 1, 0);
-		char* sc[20];
-		sprintf((char*)sc, "Score: %d", score);
-		print1(-3, 12, (char*)sc);
-
-		glColor3d(0, 1, 0);
-		char* sc2[20];
-		sprintf((char*)sc2, "Lives: %d", lives);
-		print1(-3, 10, (char*)sc2);
-
-		if (lives == 0) {
-			glColor3d(0, 1, 0);
-			char* sc3[20];
-			sprintf((char*)sc3, "Game Over!");
-			print1(0, 14, (char*)sc3);
-			gameOver = true;
-		}
-
-		glutSwapBuffers();
 	}
 	else {
-		GLfloat lightIntensity[] = { 0.01, 0.01, 0.01, 1.0f };
-		GLfloat lightPosition[] = { 0.0f, 100.0f, 0.0f, 0.0f };
-		glLightfv(GL_LIGHT0, GL_POSITION, lightPosition);
-		glLightfv(GL_LIGHT0, GL_AMBIENT, lightIntensity);
-
+		Level2Light();
+		SpotLight(valueL);
+		setupCamera();
 		//Draw Ground
 		RenderGround(2);
 		//Draw Player
@@ -541,44 +589,34 @@ void myDisplay(void)
 		RenderStones(bush4x);
 		RenderCar(tree4x);
 		RenderStones(bush5x);
-		RenderRedPowerUp(redpowerupx);
+		RenderRedPowerUp(redpowerupx,rotateCan);
 		
-		//sky box
-		glPushMatrix();
 
-		GLUquadricObj* qobj;
-		qobj = gluNewQuadric();
-		glTranslated(50, 0, 0);
-		glRotated(90, 1, 0, 1);
-		glBindTexture(GL_TEXTURE_2D, tex);
-		gluQuadricTexture(qobj, true);
-		gluQuadricNormals(qobj, GL_SMOOTH);
-		gluSphere(qobj, 100, 100, 100);
-		gluDeleteQuadric(qobj);
-
-
-		glPopMatrix();
-
-		glColor3d(0, 1, 0);
-		char* sc[20];
-		sprintf((char*)sc, "Score: %d", score);
-		print1(-3, 12, (char*)sc);
-
-		glColor3d(0, 1, 0);
-		char* sc2[20];
-		sprintf((char*)sc2, "Lives: %d", lives);
-		print1(-3, 10, (char*)sc2);
-
-		if (lives == 0) {
-			glColor3d(0, 1, 0);
-			char* sc3[20];
-			sprintf((char*)sc3, "Game Over!");
-			print1(0, 14, (char*)sc3);
-			gameOver = true;
-		}
-
-		glutSwapBuffers();
 	}
+	RenderSky();
+	glColor3d(0, 1, 0);
+	char* sc[20];
+	if (!tripleScore)
+		sprintf((char*)sc, "Score: %d", score);
+	else
+		sprintf((char*)sc, "Score: %d  3X", score);
+	print1(-3, 12, (char*)sc);
+
+	glColor3d(0, 1, 0);
+	char* sc2[20];
+	sprintf((char*)sc2, "Lives: %d", lives);
+	print1(-3, 10, (char*)sc2);
+
+	if (lives == 0) {
+		glColor3d(0, 1, 0);
+		char* sc3[20];
+		sprintf((char*)sc3, "Game Over!");
+		print1(0, 14, (char*)sc3);
+		PlaySound(TEXT("audio/gameover.wav"), NULL, SND_ASYNC | SND_FILENAME);
+		gameOver = true;
+	}
+	glutSwapBuffers();
+
 }
 
 //=======================================================================
@@ -589,11 +627,10 @@ void myKeyboard(unsigned char button, int x, int y)
 	float d = 1.0;
 	switch (button)
 	{
-
-
 	case ' ':
 		playery = 2.5;
 		jump = true;
+		PlaySound(TEXT("audio/jump.wav"), NULL, SND_ASYNC | SND_FILENAME);
 		break;
 	case '1': //1st Person View
 		firstview = true;
@@ -652,6 +689,14 @@ void myKeyboard(unsigned char button, int x, int y)
 	//cout << "Eye x: " << camera.eye.x << " y: " << camera.eye.y << " z: " << camera.eye.z << "\n Up x: " << camera.up.x << " y: " << camera.up.y << " z: " << camera.up.z << "\n Center x: " << camera.center.x << " y: " << camera.center.y << " z: " << camera.center.z;
 
 	glutPostRedisplay();
+}
+
+void myMouse(int button,int state, int x, int y) {
+	if (button == GLUT_LEFT_BUTTON) {
+		PlaySound(TEXT("audio/jump.wav"), NULL, SND_ASYNC | SND_FILENAME);
+		jump = true;
+		playery = 2.5;
+	}
 }
 
 void Special(int key, int x, int y)
@@ -717,15 +762,11 @@ void main(int argc, char** argv)
 
 	glutKeyboardFunc(myKeyboard);
 
-	/*glutMotionFunc(myMotion);
-
 	glutMouseFunc(myMouse);
 
-	glutReshapeFunc(myReshape);*/
 	glutSpecialFunc(Special);
 
 	glutTimerFunc(0, Timer, 0);
-
 
 	myInit();
 
@@ -742,62 +783,77 @@ void main(int argc, char** argv)
 }
 
 void deductLives() {
-	if (lives > 0){
+	PlaySound(TEXT("audio/collision.wav"), NULL, SND_ASYNC | SND_FILENAME);
+	if (lives > 0 && !lifepower){
 		lives--; 
 		score -= 50;
 	}
 }
 
 void handleCollision() {
-	if (bush1x >= 18.5 && bush1x <= 20 && playery != 2.5) {
-		cout << "Collision";
-		deductLives();
-		bush1x += 1.5;
-	}
-	if (bush2x >= 18.5 && bush2x <= 20 && playery != 2.5) {
-		cout << "Collision";
-		deductLives();
-		bush2x += 1.5;
-	}
-	if (bush3x >= 18.5 && bush3x <= 20 && playery != 2.5 && Level2) {
-		cout << "Collision";
-		deductLives();
-		bush3x += 1.5;
-	}
-	if (bush4x >= 18.5 && bush4x <= 20 && playery != 2.5) {
-		cout << "Collision";
-		deductLives();
-		bush4x += 1.5;
-	}
-	if (bush5x >= 18.5 && bush5x <= 20 && playery != 2.5 && Level2) {
-		cout << "Collision";
-		deductLives();
-		bush5x += 1.5;
-	}
-	if (tree1x >= 18.5 && tree1x <= 20 && playery != 2.5) {
-		cout << "Collision";
-		deductLives();
-		tree1x += 1.5;
-	}
-	if (tree2x >= 18.5 && tree2x <= 20 && playery != 2.5) {
-		cout << "Collision";
-		deductLives();
-		tree2x += 1.5;
-	}
-	if (tree3x >= 18.5 && tree3x <= 20 && playery != 2.5) {
-		cout << "Collision";
-		deductLives();
-		tree3x += 1.5;
-	}
-	if (tree4x >= 18.5 && tree4x <= 20 && playery != 2.5) {
-		cout << "Collision";
-		deductLives();
-		tree4x += 1.5;
+	if (!gameOver) {
+		if (bush1x >= 18.5 && bush1x <= 20 && playery != 2.5) {
+			cout << "Collision";
+			deductLives();
+			bush1x += 1.5;
+		}
+		if (bush2x >= 18.5 && bush2x <= 20 && playery != 2.5) {
+			cout << "Collision";
+			deductLives();
+			bush2x += 1.5;
+		}
+		if (bush3x >= 18.5 && bush3x <= 20 && playery != 2.5 && Level2) {
+			cout << "Collision";
+			deductLives();
+			bush3x += 1.5;
+		}
+		if (bush4x >= 18.5 && bush4x <= 20 && playery != 2.5) {
+			cout << "Collision";
+			deductLives();
+			bush4x += 1.5;
+		}
+		if (bush5x >= 18.5 && bush5x <= 20 && playery != 2.5 && Level2) {
+			cout << "Collision";
+			deductLives();
+			bush5x += 1.5;
+		}
+		if (tree1x >= 18.5 && tree1x <= 20 && playery != 2.5) {
+			cout << "Collision";
+			deductLives();
+			tree1x += 1.5;
+		}
+		if (tree2x >= 18.5 && tree2x <= 20 && playery != 2.5) {
+			cout << "Collision";
+			deductLives();
+			tree2x += 1.5;
+		}
+		if (tree3x >= 18.5 && tree3x <= 20 && playery != 2.5) {
+			cout << "Collision";
+			deductLives();
+			tree3x += 1.5;
+		}
+		if (tree4x >= 18.5 && tree4x <= 20 && playery != 2.5) {
+			cout << "Collision";
+			deductLives();
+			tree4x += 1.5;
 
-	}
-	if (bridgex >= 17 && bridgex <= 21 && playery == 2.5 && !Level2) {
-		cout << "Collision";
-		deductLives();
-		bridgex += 4;
+		}
+		if (bridgex >= 17 && bridgex <= 21 && playery == 2.5 && !Level2) {
+			cout << "Collision";
+			deductLives();
+			bridgex += 4;
+		}
+		if (redpowerupx >= 18.5 && redpowerupx <= 19.5 && playery == 2.5 && Level2) {
+			cout << "PowerUp";
+			redpowerupx = 30;
+			PlaySound(TEXT("audio/powerup.wav"), NULL, SND_ASYNC | SND_FILENAME);
+			lifepower = true;
+		}
+		if (orangepowerupx >= 18.5 && orangepowerupx <= 19.5 && playery == 2.5 && !Level2) {
+			cout << "PowerUp";
+			orangepowerupx = 30;
+			PlaySound(TEXT("audio/powerup.wav"), NULL, SND_ASYNC | SND_FILENAME);
+			tripleScore = true;
+		}
 	}
 }
